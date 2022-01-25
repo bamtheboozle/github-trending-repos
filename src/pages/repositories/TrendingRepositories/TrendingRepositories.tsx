@@ -1,14 +1,18 @@
 import { Box, Text } from '@chakra-ui/react';
 
-import RepositoryItem from '../../components/RepositoryItem/RepositoryItem';
-import { useRepositoriesContext } from '../../context/repositories/RepositoriesContext';
+import RepositoryItem from '../../../components/RepositoryItem/RepositoryItem';
+import Spinner from '../../../components/Spinner/Spinner';
+import { useRepositoriesContext } from '../../../context/repositories/RepositoriesContext';
 
 const TrendingRepositories = () => {
-  const { repositoriesList, starredRepositories } = useRepositoriesContext();
+  const { isLoading, repositoriesList, starredRepositories } =
+    useRepositoriesContext();
 
   return (
-    <Box>
-      {repositoriesList.length ? (
+    <Box data-testid='trending-repositories'>
+      {isLoading ? (
+        <Spinner />
+      ) : repositoriesList.length ? (
         repositoriesList.map(repo => (
           <RepositoryItem
             key={repo.id}

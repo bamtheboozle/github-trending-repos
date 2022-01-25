@@ -17,6 +17,7 @@ export type RepositoryType = {
   stargazers_count: number;
   forks_count: number;
   created_at: string;
+  language: string;
 };
 type SearchRepositoriesResponseType = {
   total_count: number;
@@ -24,9 +25,5 @@ type SearchRepositoriesResponseType = {
   items: RepositoryType[];
 };
 
-export const getRepositories = (query?: string) => {
-  const applyQuery = query ? `?q=${query}` : '';
-  return request<SearchRepositoriesResponseType>(
-    `${REPOSITORIES_URL}${applyQuery}`
-  );
-};
+export const getRepositories = (query: string) =>
+  request<SearchRepositoriesResponseType>(`${REPOSITORIES_URL}?q=${query}`);

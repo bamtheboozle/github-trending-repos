@@ -1,5 +1,5 @@
 import { RepositoriesContextProvider } from '../../context/repositories/RepositoriesContext';
-import RepositoryList from './RepositoryList';
+import RepositoryList from './RepositoryList/RepositoryList';
 
 const RepositoriesRootPage = () => (
   <RepositoriesContextProvider>

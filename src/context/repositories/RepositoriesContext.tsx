@@ -4,24 +4,26 @@ import React, {
   useState,
   useCallback,
   useMemo,
+  useEffect,
 } from 'react';
-
-import { subDays, format } from 'date-fns';
 
 import { RepositoryType } from '../../api/base/repositories';
 import { useFetchRepositories } from '../../api/queries/Repository/fetchRepositories';
+import { createSearchQuery } from '../../utils/repositories/createSearchQuery';
 
 export enum AvailablePages {
-  'trending',
-  'starred',
+  'trending' = 'trending',
+  'starred' = 'starred',
 }
 
 type StarredRepositoryType = RepositoryType & {
   starredAt: number;
 };
 
-type RepositoriesContextType = {
+export type RepositoriesContextType = {
   queryPage: number;
+  daysBack: number;
+  languageFilter?: string;
   activePage: AvailablePages;
   repositoriesList: RepositoryType[];
   starredRepositories: {
@@ -31,10 +33,13 @@ type RepositoriesContextType = {
   setActivePage: (page: AvailablePages) => void;
   handleStar: (repo: RepositoryType) => void;
   setQueryPage: (page: number) => void;
+  setLanguageFilter: (lang?: string) => void;
+  setDaysBack: (days: number) => void;
 };
 
 const Context = createContext<RepositoriesContextType>({
   queryPage: 0,
+  daysBack: 7,
   repositoriesList: [],
   starredRepositories: {},
   isLoading: true,
@@ -42,24 +47,34 @@ const Context = createContext<RepositoriesContextType>({
   setActivePage: () => {},
   handleStar: () => {},
   setQueryPage: () => {},
+  setLanguageFilter: () => {},
+  setDaysBack: () => {},
 });
 
 type RepositoriesContextProviderProps = {
   children: React.ReactNode;
 };
 
-export function RepositoriesContextProvider({
-  children,
-}: RepositoriesContextProviderProps) {
-  const [queryPage, setQueryPage] = useState(0);
+const LOCALSTORAGE_REPO_KEY = 'STARRED_REPOSITORIES';
 
-  const MAX_DATE_BACK = subDays(new Date(), 7);
-  const { data, isLoading } = useFetchRepositories(
-    `created:>${format(
-      MAX_DATE_BACK,
-      'yyyy-MM-dd'
-    )}&sort=stars&order=desc&p=${queryPage}`
+export const RepositoriesContextProvider = ({
+  children,
+}: RepositoriesContextProviderProps) => {
+  const [queryPage, setQueryPage] = useState(0);
+  const [languageFilter, setLanguageFilter] = useState<string | undefined>();
+  const [daysBack, setDaysBack] = useState<number>(7);
+  const query = useMemo(
+    () =>
+      createSearchQuery({
+        daysBack,
+        sort: 'stars-desc',
+        p: queryPage,
+        language: languageFilter,
+      }),
+    [queryPage, languageFilter, daysBack]
   );
+
+  const { data, isLoading } = useFetchRepositories(query);
   const [activePage, setActivePage] = useState<AvailablePages>(
     AvailablePages.trending
   );
@@ -67,17 +82,34 @@ export function RepositoriesContextProvider({
     [id: string]: StarredRepositoryType;
   }>({});
 
+  useEffect(() => {
+    const localStorageStarredRepos = localStorage.getItem(
+      LOCALSTORAGE_REPO_KEY
+    );
+    if (localStorageStarredRepos) {
+      setStarredRepositories(JSON.parse(localStorageStarredRepos));
+    }
+  }, []);
+
   const handleStar = useCallback(
     (repo: RepositoryType) => {
       if (starredRepositories[repo.id]) {
         const { [repo.id]: deleted, ...rest } = starredRepositories;
         setStarredRepositories(rest);
+        localStorage.setItem(LOCALSTORAGE_REPO_KEY, JSON.stringify(rest));
       } else {
-        const updatedRepo = { ...repo, starredAt: Date.now() };
-        setStarredRepositories({
+        const updatedRepositories = {
           ...starredRepositories,
-          [repo.id]: updatedRepo,
-        });
+          [repo.id]: {
+            ...repo,
+            starredAt: Date.now(),
+          },
+        };
+        setStarredRepositories(updatedRepositories);
+        localStorage.setItem(
+          LOCALSTORAGE_REPO_KEY,
+          JSON.stringify(updatedRepositories)
+        );
       }
     },
     [starredRepositories]
@@ -86,6 +118,8 @@ export function RepositoriesContextProvider({
   const contextValue = useMemo<RepositoriesContextType>(
     () => ({
       isLoading,
+      daysBack,
+      languageFilter,
       activePage,
       queryPage,
       setQueryPage,
@@ -93,20 +127,26 @@ export function RepositoriesContextProvider({
       repositoriesList: data || [],
       starredRepositories,
       handleStar,
+      setLanguageFilter,
+      setDaysBack,
     }),
     [
       data,
+      languageFilter,
+      daysBack,
       queryPage,
       setQueryPage,
       starredRepositories,
       isLoading,
       activePage,
       handleStar,
+      setDaysBack,
       setActivePage,
+      setLanguageFilter,
     ]
   );
 
   return <Context.Provider value={contextValue}>{children}</Context.Provider>;
-}
+};
 
 export const useRepositoriesContext = () => useContext(Context);

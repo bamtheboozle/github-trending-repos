@@ -1,4 +1,4 @@
-import { Link, Flex, Box, Icon, Button } from '@chakra-ui/react';
+import { Link, Flex, Box, Icon, Button, Text } from '@chakra-ui/react';
 import { formatDistance, parseISO } from 'date-fns';
 import { MdStar, MdStarOutline, MdShare, MdHistory } from 'react-icons/md';
 
@@ -19,13 +19,13 @@ const RepositoryItem = ({ repo, isStarred }: RepositoryItemProps) => {
   return (
     <Box borderWidth='1px' borderStyle='solid' borderColor='gray.200' p={2}>
       <Flex w='100%' justifyContent='space-between' alignItems='center'>
-        <Box>
+        <Box maxW='50%'>
           <Link href={repo.html_url} color='blue.500' pl={4} isExternal>
             <span>{repo.owner.login} / </span>
             <strong>{repo.name}</strong>
           </Link>
 
-          <p>{repo.description}</p>
+          <Text noOfLines={2}>{repo.description}</Text>
         </Box>
         <Box>
           <Button

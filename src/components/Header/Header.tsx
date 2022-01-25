@@ -1,7 +1,8 @@
-import { Box, Flex } from '@chakra-ui/react';
+import { Box, Flex, Heading } from '@chakra-ui/react';
 
 const Header = () => (
   <Box
+    as='header'
     borderWidth='1px'
     borderStyle='solid'
     borderColor='gray.200'
@@ -10,9 +11,9 @@ const Header = () => (
     color='white'
   >
     <Flex alignItems='center' gridGap={5}>
-      <h3>
-        <strong>Header</strong>
-      </h3>
+      <Heading as='h1' size='md'>
+        Header
+      </Heading>
     </Flex>
   </Box>
 );
